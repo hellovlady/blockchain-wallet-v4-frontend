@@ -1,25 +1,27 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import { connect, ConnectedProps } from 'react-redux'
+import { connect, ConnectedProps, useDispatch } from 'react-redux'
 import { bindActionCreators } from 'redux'
+import { clearSubmitErrors } from 'redux-form'
 
 import { BSOrderType, ProviderDetailsType, WalletOptionsType } from '@core/types'
 import CardError from 'components/BuySell/CardError'
+import DataError from 'components/DataError'
 import { GenericNabuErrorFlyout } from 'components/GenericNabuErrorFlyout'
 import { actions, selectors } from 'data'
-import { CARD_ERROR_CODE } from 'data/components/buySell/model'
+import { CARD_ERROR_CODE, FORM_BS_PREVIEW_SELL } from 'data/components/buySell/model'
 import { RootState } from 'data/rootReducer'
 import { useRemote } from 'hooks'
 import { isNabuError } from 'services/errors'
 
 import Loading from './template.loading'
 import Success from './template.success'
-import DataError from 'components/DataError'
 
 const ThreeDSHandlerCheckoutDotCom = (props: Props) => {
   const [isPolling, setPolling] = useState(false)
   const order = useRemote(() => props.orderR)
   const card = useRemote(() => props.cardR)
   const providerDetails = useRemote(() => props.providerDetailsR)
+  const dispatch = useDispatch()
 
   const handlePostMessage = async ({ data }: { data: { payment: 'SUCCESS' } }) => {
     if (data.payment !== 'SUCCESS') return
@@ -48,7 +50,7 @@ const ThreeDSHandlerCheckoutDotCom = (props: Props) => {
   }
 
   const handleReset = () => {
-    props.buySellActions.destroyCheckout()
+    dispatch(clearSubmitErrors(FORM_BS_PREVIEW_SELL))
   }
 
   const handleRetry = () => {
@@ -66,8 +68,9 @@ const ThreeDSHandlerCheckoutDotCom = (props: Props) => {
   const renderError = useCallback(
     (error: string | Error) => {
       if (isNabuError(error)) {
-        return <GenericNabuErrorFlyout error={error} onClickClose={handleBack} />
-      } else if (typeof error === 'string') {
+        return <GenericNabuErrorFlyout error={error} onDismiss={handleBack} />
+      }
+      if (typeof error === 'string') {
         return (
           <CardError
             code={error}
@@ -76,9 +79,8 @@ const ThreeDSHandlerCheckoutDotCom = (props: Props) => {
             handleRetry={handleRetry}
           />
         )
-      } else {
-        return <DataError message={{ message: error.toString() }} />
       }
+      return <DataError message={{ message: error.toString() }} />
     },
     [handleReset, handleBack, handleRetry]
   )
