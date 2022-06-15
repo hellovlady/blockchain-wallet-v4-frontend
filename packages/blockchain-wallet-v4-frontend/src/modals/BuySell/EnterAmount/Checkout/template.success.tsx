@@ -1,7 +1,8 @@
 import React, { ReactChild, useCallback, useState } from 'react'
 import { FormattedMessage } from 'react-intl'
+import { useDispatch } from 'react-redux'
 import { GreyBlueCartridge } from 'blockchain-wallet-v4-frontend/src/modals/Interest/DepositForm/model'
-import { Field, InjectedFormProps, reduxForm } from 'redux-form'
+import { clearSubmitErrors, Field, InjectedFormProps, reduxForm } from 'redux-form'
 import styled from 'styled-components'
 
 import Currencies from '@core/exchange/currencies'
@@ -28,7 +29,7 @@ import { BSCheckoutFormValuesType, SwapBaseCounterTypes } from 'data/types'
 import { getEffectiveLimit, getEffectivePeriod } from 'services/custodial'
 import { isNabuError, NabuError } from 'services/errors'
 import { CRYPTO_DECIMALS, FIAT_DECIMALS, formatTextAmount } from 'services/forms'
-import { clearSubmitErrors } from 'redux-form'
+
 import { AlertButton } from '../../../components'
 import Scheduler from '../../../RecurringBuys/Scheduler'
 import { Row } from '../../../Swap/EnterAmount/Checkout'
@@ -46,7 +47,6 @@ import {
   maximumAmount,
   minimumAmount
 } from './validation'
-import { useDispatch } from 'react-redux'
 
 const { FORM_BS_CHECKOUT, LIMIT, LIMIT_FACTOR } = model.components.buySell
 
