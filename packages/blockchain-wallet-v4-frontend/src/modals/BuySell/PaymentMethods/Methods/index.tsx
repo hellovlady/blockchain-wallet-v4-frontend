@@ -1,10 +1,6 @@
-import React, { ReactElement, useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { FormattedMessage } from 'react-intl'
-import {
-  CARD_TYPES,
-  DEFAULT_CARD_SVG_LOGO
-} from 'blockchain-wallet-v4-frontend/src/modals/BuySell/PaymentMethods/model'
-import { Form, reduxForm } from 'redux-form'
+import { getIcon } from 'blockchain-wallet-v4-frontend/src/modals/BuySell/PaymentMethods/model'
 import styled from 'styled-components'
 
 import {
@@ -16,8 +12,8 @@ import {
   WalletCurrencyType,
   WalletFiatEnum
 } from '@core/types'
-import { Icon, Image, Text } from 'blockchain-info-components'
-import { FlyoutWrapper } from 'components/Flyout'
+import { Image, Text } from 'blockchain-info-components'
+import { FlyoutContainer, FlyoutContent, FlyoutHeader } from 'components/Flyout/Layout'
 import { getCoinFromPair, getFiatFromPair } from 'data/components/buySell/model'
 
 import { Props as OwnProps, SuccessStateType } from '../index'
@@ -27,36 +23,17 @@ import GooglePay from './GooglePay'
 import LinkBank from './LinkBank'
 import PaymentCard from './PaymentCard'
 
-const Wrapper = styled.div`
-  display: flex;
-  justify-content: space-between;
-  flex-direction: column;
-  height: 100%;
-`
-const TopText = styled(Text)`
-  display: flex;
-  align-items: center;
-  margin-bottom: 7px;
-`
 const PaymentsWrapper = styled.div`
   border-top: 1px solid ${(props) => props.theme.grey000};
 `
-const NoMethods = styled(FlyoutWrapper)`
+const NoMethods = styled.div`
   text-align: center;
-`
-const IconContainer = styled.div`
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background-color: ${(props) => props.theme.blue000};
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  margin-top: 40px;
 `
 
 export type Props = OwnProps & SuccessStateType
 
-const Methods = (props: Props) => {
+const Methods: React.FC<Props> = (props: Props) => {
   const [isApplePayAvailable, setApplePayAvailable] = useState(false)
   const [isGooglePayAvailable, setGooglePayAvailable] = useState(false)
 
@@ -159,44 +136,6 @@ const Methods = (props: Props) => {
     props.buySellActions.handleMethodChange({ isFlow: true, method, mobilePaymentMethod })
   }
 
-  const getIcon = (value: BSPaymentMethodType): ReactElement => {
-    switch (value.type) {
-      case BSPaymentTypes.BANK_TRANSFER:
-      case BSPaymentTypes.LINK_BANK:
-        return <Image name='bank' height='48px' />
-      case BSPaymentTypes.BANK_ACCOUNT:
-        return (
-          <IconContainer>
-            <Icon size='18px' color='blue600' name='arrow-down' />
-          </IconContainer>
-        )
-      case BSPaymentTypes.PAYMENT_CARD:
-        return (
-          <IconContainer>
-            <Icon size='18px' color='blue600' name='credit-card-sb' />
-          </IconContainer>
-        )
-      case BSPaymentTypes.USER_CARD:
-        const { card } = value
-        if (!card) {
-          return <></>
-        }
-        const cardType = CARD_TYPES.find((cc) => cc.type === card.type)
-        return (
-          <img
-            alt='Credit Card Logo'
-            height='18px'
-            width='auto'
-            src={cardType ? cardType.logo : DEFAULT_CARD_SVG_LOGO}
-          />
-        )
-      case BSPaymentTypes.FUNDS:
-        return <Icon size='32px' color='USD' name={value.currency as WalletCurrencyType} />
-      default:
-        return <Image name='blank-card' />
-    }
-  }
-
   const { fiatCurrency, orderType } = props
 
   const availableCards = props.cards.filter(
@@ -281,52 +220,40 @@ const Methods = (props: Props) => {
   }, [props.applePayEnabled, props.googlePayEnabled, props.isInternalTester])
 
   return (
-    <Wrapper>
-      <Form>
-        <FlyoutWrapper>
-          <TopText color='grey800' size='20px' weight={600}>
-            <Icon
-              cursor
-              name='arrow-back'
-              size='20px'
-              color='grey600'
-              style={{ marginRight: '28px' }}
-              role='button'
-              onClick={() =>
-                props.buySellActions.setStep({
-                  cryptoCurrency: getCoinFromPair(props.pair.pair),
-                  fiatCurrency: getFiatFromPair(props.pair.pair),
-                  orderType: props.orderType,
-                  pair: props.pair,
-                  step: 'ENTER_AMOUNT'
-                })
-              }
+    <FlyoutContainer>
+      <FlyoutHeader
+        data-e2e='paymentMethodsBackButton'
+        onClick={() =>
+          props.buySellActions.setStep({
+            cryptoCurrency: getCoinFromPair(props.pair.pair),
+            fiatCurrency: getFiatFromPair(props.pair.pair),
+            orderType: props.orderType,
+            pair: props.pair,
+            step: 'ENTER_AMOUNT'
+          })
+        }
+        mode='back'
+      >
+        <FormattedMessage id='modals.simplebuy.paymentmethods' defaultMessage='Payment Methods' />
+      </FlyoutHeader>
+      <FlyoutContent mode='top'>
+        {!anyAvailableMethod ? (
+          <NoMethods>
+            <Image
+              height='60px'
+              name='world-alert'
+              srcset={{ 'world-alert2': '2x', 'world-alert3': '3x' }}
             />
-            <div>
+            <Text size='16px' weight={500} style={{ marginTop: '8px' }}>
               <FormattedMessage
-                id='modals.simplebuy.paymentmethods'
-                defaultMessage='Payment Methods'
+                id='copy.no_payment_methods'
+                defaultMessage='No payment methods available.'
               />
-            </div>
-          </TopText>
-        </FlyoutWrapper>
-        <PaymentsWrapper>
-          {!anyAvailableMethod ? (
-            <NoMethods>
-              <Image
-                height='60px'
-                name='world-alert'
-                srcset={{ 'world-alert2': '2x', 'world-alert3': '3x' }}
-              />
-              <Text size='16px' weight={500} style={{ marginTop: '8px' }}>
-                <FormattedMessage
-                  id='copy.no_payment_methods'
-                  defaultMessage='No payment methods available.'
-                />
-              </Text>
-            </NoMethods>
-          ) : null}
+            </Text>
+          </NoMethods>
+        ) : null}
 
+        <PaymentsWrapper>
           {paymentCard ? (
             <PaymentCard
               {...paymentCard}
@@ -383,12 +310,9 @@ const Methods = (props: Props) => {
             </>
           ) : null}
         </PaymentsWrapper>
-      </Form>
-    </Wrapper>
+      </FlyoutContent>
+    </FlyoutContainer>
   )
 }
 
-export default reduxForm<{}, Props>({
-  destroyOnUnmount: false,
-  form: 'bsPaymentMethods'
-})(Methods)
+export default Methods
