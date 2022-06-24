@@ -46,7 +46,7 @@ import { isNabuError } from 'services/errors'
 import { actions as custodialActions } from '../../custodial/slice'
 import profileSagas from '../../modules/profile/sagas'
 import brokerageSagas from '../brokerage/sagas'
-import { OBType } from '../brokerage/types'
+import { BankCredentialsType, OBType } from '../brokerage/types'
 import { convertBaseToStandard, convertStandardToBase } from '../exchange/services'
 import sendSagas from '../send/sagas'
 import { FALLBACK_DELAY, getOutputFromPair } from '../swap/model'
@@ -1325,9 +1325,33 @@ export default ({ api, coreSagas, networks }: { api: APIType; coreSagas: any; ne
     yield put(actions.form.change(FORM_BS_CHECKOUT, 'amount', standardAmt))
   }
 
-  const handleBSMethodChange = function* ({
+  const handleRefreshIfNeeded = function* (method: BSPaymentMethodType) {
+    const requiresRefresh = method.attributes?.requiresRefresh
+    if (!requiresRefresh || !method.id) return
+
+    const domainsR = yield select(selectors.core.walletOptions.getDomains)
+    const { comRoot } = domainsR.getOrElse({
+      comRoot: 'https://www.blockchain.com'
+    })
+    const redirect_uri = `${comRoot}/brokerage-link-success`
+    const attributes = { redirect_uri }
+    try {
+      yield put(actions.components.brokerage.fetchBankLinkCredentialsLoading())
+      const data: BankCredentialsType = yield call(
+        api.refreshBankAccountLink,
+        method.id,
+        attributes
+      )
+      yield put(actions.components.brokerage.setBankCredentials(data))
+    } catch (error) {
+      yield put(actions.components.brokerage.fetchBankLinkCredentialsError(error))
+    }
+  }
+
+  const handleMethodChange = function* ({
     payload: { isFlow, method, mobilePaymentMethod }
   }: ReturnType<typeof A.handleMethodChange>) {
+    yield call(handleRefreshIfNeeded, method)
     const values: T.BSCheckoutFormValuesType = yield select(
       selectors.form.getFormValues(FORM_BS_CHECKOUT)
     )
@@ -2023,9 +2047,9 @@ export default ({ api, coreSagas, networks }: { api: APIType; coreSagas: any; ne
     fetchSellQuote,
     formChanged,
     handleBSDepositFiatClick,
-    handleBSMethodChange,
     handleBuyMaxAmountClick,
     handleBuyMinAmountClick,
+    handleMethodChange,
     handleSellMaxAmountClick,
     handleSellMinAmountClick,
     initializeBillingAddress,
