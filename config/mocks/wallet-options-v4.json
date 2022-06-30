@@ -51,6 +51,7 @@
         "recurringBuys": true,
         "rewardsFlowUnderSwapEnabled": true,
         "rewardsPromoBanner": true,
+        "appleAndGooglePayPromoBanner": true,
         "showSilverRevamp": true,
         "showTermsAndConditions": false,
         "stxSelfCustodyEnableAirdrop": true,

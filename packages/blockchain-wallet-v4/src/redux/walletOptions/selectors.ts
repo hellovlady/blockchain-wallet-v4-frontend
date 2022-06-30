@@ -1,7 +1,11 @@
 import { path, prop } from 'ramda'
 
 import { Remote } from '@core'
-import { /* AccountTokensBalancesResponseType, */ Product, RemoteDataType } from '@core/types'
+import {
+  /* AccountTokensBalancesResponseType, */ Product,
+  RemoteDataType,
+  RemoteType
+} from '@core/types'
 import { RootState } from 'data/rootReducer'
 
 import { WalletOptionsType } from './types'
@@ -127,6 +131,10 @@ export const getRewardsFlowUnderSwapEnabled = (state: RootState) =>
 // check for rewards promo banner to be enabled
 export const getRewardsPromoBannerEnabled = (state: RootState) =>
   getWebOptions(state).map(path(['featureFlags', 'rewardsPromoBanner']))
+
+// check for rewards promo banner to be enabled
+export const getAppleAndGooglePayPromoBannerEnabled = (state: RootState) =>
+  getWebOptions(state).map(path(['featureFlags', 'appleAndGooglePayPromoBanner']))
 
 // show referral signup input in sign up
 export const getReferralEnabled = (state: RootState) =>
